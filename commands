@@ -1,0 +1,23 @@
+game.me.gainMaxHp()//增加1点角色体力上限
+
+game.me.addSkill('技能名')//永久增加一个技能
+game.me.addTempSkill('技能名','阶段名')//增加一个技能到某个阶段
+
+game.players[1].damage()//对玩家右手边第1（数值可改）个角色造成一点伤害
+
+cheat.g('牌名')//获得指定牌，花色点数随机
+
+game.me.addMark('标记名',数量)//增加标记
+
+功能性命令：
+game.addGlobalSkill('autoswap');
+lib.element.player.isUnderControl=()=>true;
+for(var i of game.players)
+i.isUnderControl=function(self,me){
+me=(me||game.me);		
+if(this===me){
+if(self) return true;
+return false;
+}
+return true;
+}//控制所有人
