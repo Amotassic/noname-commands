@@ -1,0 +1,15 @@
+game.me.addSkill('qinglong_skill');game.me.addSkill('guanshi_skill')//传说中的青龙贯月斧
+
+cheat.g('guding');cheat.g('jiu');cheat.g('sha');game.me.addTempSkill('repojun','phaseUseEnd');game.me.addTempSkill('rewansha','phaseUseEnd');game.me.addTempSkill('yimie','phaseUseEnd')//一刀斩，用完即弃
+cheat.g('guding');cheat.g('jiu');cheat.g('sha');cheat.g('tiesuo',4);game.me.addTempSkill('repojun','phaseUseEnd');game.me.addTempSkill('rewansha','phaseUseEnd');game.me.addTempSkill('yimie','phaseUseEnd')//一刀斩加了铁索的脚本
+
+game.me.addMark('baonu',6);game.me.addTempSkill('ol_shenfen','phaseUseEnd');game.me.addTempSkill('xinfencheng','phaseUseEnd');game.me.addTempSkill('luanwu','phaseUseEnd')//神愤焚城乱武，不用选神吕布
+
+game.me.addSkill('qingxian');game.me.addSkill('reguicai');game.me.addSkill('xinleiji');game.me.addSkill('huituo')//恢拓清弦鬼才雷击
+
+game.me.addSkill('qiaobian');game.me.addSkill('pingkou');game.me.addSkill('shanzhuan');game.me.addSkill('xinfu_pdgyingshi')//巧变平寇擅专隐世
+game.me.addSkill('xinjushou');game.me.addSkill('pingkou');game.me.addSkill('shanzhuan');game.me.addSkill('xinfu_pdgyingshi');game.me.addSkill('jiushi')//据守酒诗平寇擅专隐世
+
+game.me.gainMaxHp(6);game.me.addSkill('guding_skill');game.me.addSkill('wutiesuolian_skill');cheat.g('jiu');cheat.g('sha');cheat.g('qilin');game.me.addSkill('repojun');game.me.addSkill('jiaozi');game.me.addSkill('ol_shichou')//乌铁锁全场
+
+game.me.addSkill('bazhen');game.me.addSkill('oljuanxia');game.me.addSkill('oltiaoxin');game.me.addSkill('fuji');game.me.addSkill('xinleiji');game.me.addSkill('xinguidao')//真正的神张角
