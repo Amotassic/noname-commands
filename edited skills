@@ -1,0 +1,147 @@
+族旬采 烈誓修改：回退到旧版，已经废除判定区也能烧（你好烧啊），拙劣的修改，肯定有bug
+			clanlieshi:{
+				audio:2,
+				enable:'phaseUse',
+				filter:function(event,player){
+					return !player.storage._disableEquip1||player.countCards('h',card=>['sha','shan'].contains(get.name(card)))>0;
+				},
+				chooseButton:{
+					dialog:function(event,player){
+						var dialog=ui.create.dialog('烈誓：选择一项','hidden');
+						dialog.add([lib.skill.clanlieshi.choices.slice(),'textbutton']);
+						return dialog;
+					},
+					filter:function(button,player){
+						var link=button.link;
+						if(link=='damage') return !player.storage._disableEquip1;
+						var num=player.countCards('h',link);
+						return num>0&&num==player.getDiscardableCards(player,'h').filter(i=>get.name(i)==link).length;
+					},
+					check:function(button){
+						var player=_status.event.player;
+						switch (button.link){
+							case 'damage':
+								if(get.damageEffect(player,player,player,'fire')>=0) return 10;
+								if(player.hp>=Math.max(2,3-player.getFriends().length)&&game.countPlayer(current=>get.attitude(player,current)<0&&current.countCards('h',card=>['sha','shan'].contains(get.name(card))))) return 0.8+Math.random();
+								return 0;
+							case 'shan':
+								if(player.countCards('h','shan')==1) return 8+Math.random();
+								return 1+Math.random();
+							case 'sha':
+								if(player.countCards('h','sha')==1) return 8+Math.random();
+								return 0.9+Math.random();
+						}
+					},
+					backup:function(links){
+						var next=get.copy(lib.skill['clanlieshi_backupx']);
+						next.choice=links[0];
+						return next;
+					},
+					prompt:function(links){
+						if(links[0]=='damage') return '废除判定区并受到1点火焰伤害';
+						return '弃置所有【'+get.translation(links[0])+'】';
+					},
+				},
+				choices:[
+					['damage','废除判定区并受到1点火焰伤害'],
+					['shan','弃置所有【闪】'],
+					['sha','弃置所有【杀】'],
+				],
+				ai:{
+					order:function(item,player){
+						if(!player) return;
+						var eff=get.damageEffect(player,player,player,'fire'),disabled=!player.storage._disableEquip1;
+						if((player.countCards('h','sha')==1||player.countCards('h','shan')==1)&&eff<0&&!disabled) return 8;
+						else if(eff>=0&&!disabled) return 5.8;
+						if(!disabled&&!player.countCards('h',card=>['sha','shan'].contains(get.name(card)))){
+							if((!player.hasSkill('clanhuanyin')||!player.canSave(player))&&player.hp<=1) return 0;
+							if(player.canSave(player)&&player.hp==1&&player.countCards('h')<=1) return 2.6;
+							if(player.hp<Math.max(2,3-player.getFriends().length)||!game.countPlayer(current=>get.attitude(player,current)<0&&current.countCards('h',card=>['sha','shan'].contains(get.name(card))))) return 0;
+						}
+						return 2.5;
+					},
+					expose:0.2,
+					result:{player:1},
+				},
+				subSkill:{
+					backup:{},
+					backupx:{
+						audio:'clanlieshi',
+						selectCard:-1,
+						selectTarget:-1,
+						filterCard:()=>false,
+						filterTarget:()=>false,
+						multitarget:true,
+						content:function(){
+							'step 0'
+							var choice=lib.skill.clanlieshi_backup.choice;
+							event.choice=choice;
+							if(choice=='damage'){
+								player.damage('fire');
+								if(!player.storage._disableJudge) player.disableJudge();
+							}else{
+								var cards=player.getCards('h',choice);
+								if(cards.length) player.discard(cards);
+							}
+							'step 1'
+							if(!player.isIn()) event.finish();
+							else player.chooseTarget('烈誓：令一名其他角色选择另一项',lib.filter.notMe,true).set('ai',target=>{
+								var player=_status.event.player,chosen=_status.event.getParent().choice,att=get.attitude(player,target);
+								if(chosen=='damage'){
+									if(att>0) return 0;
+									return -att/2+target.countCards('h',card=>['sha','shan'].contains(get.name(card)));
+								}
+								return get.damageEffect(target,player,player,'fire');
+							});
+							'step 2'
+							if(result.bool){
+								var target=result.targets[0];
+								event.target=target;
+								player.line(target,'fire');
+								var list=[],choice=event.choice;
+								var choiceList=lib.skill.clanlieshi.choices.slice();
+								choiceList=choiceList.map((link,ind,arr)=>{
+									link=link[1];
+									var ok=true;
+									if(arr[ind][0]==choice){
+										link+='（'+get.translation(player)+'已选）';
+										ok=false;
+									}
+									if(ind==0){
+										if(target.storage._disableEquip1) ok=false;
+									}
+									else if(ind>0){
+										var name=ind==1?'shan':'sha';
+										if(!target.countCards('h',name)) ok=false;
+									}
+									if(!ok) link='<span style="opacity:0.5">'+link+'</span>';
+									else list.push('选项'+get.cnNumber(ind+1,true));
+									return link;
+								});
+								if(!list.length){event.finish(); return;}
+								target.chooseControl(list).set('choiceList',choiceList).set('ai',()=>{
+									var controls=_status.event.controls.slice(),player=_status.event.player,user=_status.event.getParent().player;
+									if(controls.length==1) return controls[0];
+									if(controls.contains('选项一')&&get.damageEffect(player,user,player,'fire')>=0) return '选项一';
+									if(controls.contains('选项一')&&player.hp<=2&&player.countCards('h',card=>['sha','shan'].contains(get.name(card)))<=3) controls.remove('选项一');
+									if(controls.length==1) return controls[0];
+									if(player.getCards('h','sha').reduce((p,c)=>p+get.value(c,player),0)>player.getCards('h','sha').reduce((p,c)=>p+get.value(c,player),0)){
+										if(controls.contains('选项三')) return '选项三';
+									}
+									else if(controls.contains('选项二')) return '选项二';
+									return controls.randomGet();
+								});
+							} else event.finish();
+							'step 3'
+							if(result.control=='选项一'){
+							    target.damage('fire');
+								if(!target.storage._disableJudge) target.disableJudge();
+							}else{
+								var cards=target.getCards('h',result.control=='选项二'?'shan':'sha');
+								if(cards.length) target.discard(cards);
+							}
+						}
+					}
+				}
+			},
+
