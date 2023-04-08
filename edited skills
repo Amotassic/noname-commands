@@ -145,3 +145,130 @@
 				}
 			},
 
+
+tianming_info:'当你于回合外成为【杀】或普通锦囊牌的目标时，你可以选择是否弃置至多两张牌，然后摸两张牌；若此时全场体力值最多的角色仅有一名且不是你，该角色可以发动一次标天命。',
+mizhao_info:'出牌阶段限一次，你可以将任意张手牌交给一名其他角色。若如此做，你令该角色与你指定的另一名有手牌的角色拼点，视为拼点赢的角色对没赢的角色使用一张【杀】。',
+			tianming:{
+				audio:2,
+				trigger:{target:'useCardToTargeted'},
+				forced:false,
+				filter:function(event,player){
+					if(player==_status.currentPhase) return false;
+					return event.card.name=='sha'||get.type(event.card,false)=='trick';
+				},
+				content:function(){
+					"step 0"
+					player.chooseToDiscard(2,false,'he');
+					player.draw(2);
+					var players=game.filterPlayer();
+					players.sort(function(a,b){
+						return b.hp-a.hp;
+					});
+					if(players[0].hp>players[1].hp&&players[0]!=player){
+						players[0].chooseBool(get.prompt2('tianming'));
+						event.player=players[0];
+					}
+					else{
+						event.finish();
+					}
+					"step 1"
+					if(result.bool){
+						player.chooseToDiscard(2,true,'he');
+						player.draw(2);
+					}
+				},
+				ai:{
+					effect:{
+						target:function(card,player,target,current){
+							if(card.name=='sha') return [1,0.5];
+						}
+					}
+				}
+			},
+			mizhao:{
+				enable:'phaseUse',
+				usable:1,
+				audio:2,
+				filter:function(event,player){
+					return player.countCards('h')>0;
+				},
+				filterCard:true,
+				selectCard:[1,Infinity],
+				filterTarget:function(card,player,target){
+					return player!=target;
+				},
+				discard:false,
+				lose:false,
+				delay:false,
+				ai:{
+					order:1,
+					result:{
+						player:0,
+						target:function(player,target){
+							if(target.hasSkillTag('nogain')) return 0;
+							if(player.countCards('h')>1){
+								return 1;
+							}
+							var players=game.filterPlayer();
+							for(var i=0;i<players.length;i++){
+								if(players[i].countCards('h')&&players[i]!=target&&players[i]!=player&&get.attitude(player,players[i])<0){
+									break;
+								}
+							}
+							if(i==players.length){
+								return 1;
+							}
+							return -2/(target.countCards('h')+1);
+						}
+					}
+				},
+				content:function(){
+					"step 0"
+					event.target1=targets[0];
+					player.give(cards,targets[0],'giveAuto');
+					"step 1"
+					if(!targets[0].countCards('h')){
+						event.finish();
+						return;
+					}
+					var players=game.filterPlayer();
+					for(var i=0;i<players.length;i++){
+						if(players[i]!=event.target1&&players[i]!=player&&event.target1.canCompare(players[i])){
+							break;
+						}
+					}
+					if(i==players.length){
+						event.finish();
+					}
+					"step 2"
+					player.chooseTarget(true,'选择拼点目标',function(card,player,target){
+						return _status.event.target1.canCompare(target)&&target!=player;
+					}).set('ai',function(target){
+						var player=_status.event.player;
+						var eff=get.effect(target,{name:'sha'},_status.event.target1,player);
+						var att=get.attitude(player,target);
+						if(att>0){
+							return eff-10;
+						}
+						return eff;
+					}).set('target1',event.target1).set('forceDie',true);
+					"step 3"
+					if(result.targets.length){
+						event.target2=result.targets[0];
+						event.target1.line(event.target2);
+						event.target1.chooseToCompare(event.target2);
+					}
+					else{
+						event.finish();
+					}
+					"step 4"
+					if(!result.tie){
+						if(result.bool){
+							if(event.target1.canUse({name:'sha',isCard:true},event.target2,false)) event.target1.useCard({name:'sha',isCard:true},event.target2);
+						}
+						else if(event.target2.canUse({name:'sha',isCard:true},event.target1,false)){
+							event.target2.useCard({name:'sha',isCard:true},event.target1);
+						}
+					}
+				}
+			},
